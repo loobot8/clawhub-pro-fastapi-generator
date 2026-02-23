@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Install uv
+        run: pip install uv
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run linter
+        run: uv run ruff check .
+      
+      - name: Run type checker
+        run: uv run mypy src/
+      
+      - name: Run tests
+        run: uv run pytest --cov=src --cov-report=xml -x
+        env:
+          JWT_SECRET: test-secret-key-at-least-32-characters-long
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
